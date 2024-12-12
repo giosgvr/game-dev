@@ -60,9 +60,15 @@ document.getElementById('restartButton').addEventListener('click', () => {
 document.getElementById('menuButton').addEventListener('click', () => {
     document.getElementById('endScreen').style.display = 'none';
     document.getElementById('menu').style.display = 'block';
+
+        scoreDisplay.textContent = '';
+    
 });
 
 function resetGame() {
+    if (animationId) {
+        cancelAnimationFrame(animationId); // Stop de vorige animatie
+    }
     bullets = [];
     asteroids = [];
     score = 0;
