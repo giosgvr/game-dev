@@ -4,14 +4,21 @@ const spaceshipImg = new Image();
 const asteroidImg = new Image();
 const backgroundImg = new Image();
 const beamImg = new Image();
+const upgradeImg = new Image(); // Upgrade afbeelding
 
 spaceshipImg.src = 'spaceship.png';
 asteroidImg.src = 'enemy.png';
 backgroundImg.src = 'background.png';
 beamImg.src = 'beam.png';
+upgradeImg.src = 'upgrade.png';
 
-let spaceship, bullets, asteroids, score, asteroidSpawnInterval, animationId, lastAsteroidSpawn;
+let spaceship, bullets, asteroids, upgrades, score, asteroidSpawnInterval, animationId, lastAsteroidSpawn;
 let isGameOver = false;
+let isAutoShooting = false; // Automatisch schieten
+let autoShootingTimer = null;
+let lastAutoShoot = 0; // Tijdstip van het laatste autoschot
+const autoShootInterval = 300; // Interval tussen autoschoten in milliseconden
+
 const keys = { left: false, right: false, space: false };
 
 // Voeg score display toe
@@ -49,9 +56,6 @@ document.getElementById('restartButton').addEventListener('click', () => {
     document.getElementById('endScreen').style.display = 'none';
     canvas.style.zIndex = '0';
 
-    const difficulty = document.getElementById('difficulty').value;
-    asteroidSpawnInterval = difficulty === 'easy' ? 1500 : difficulty === 'medium' ? 1000 : 500;
-
     resetGame();
     initGame();
     gameLoop();
@@ -60,19 +64,19 @@ document.getElementById('restartButton').addEventListener('click', () => {
 document.getElementById('menuButton').addEventListener('click', () => {
     document.getElementById('endScreen').style.display = 'none';
     document.getElementById('menu').style.display = 'block';
-
-        scoreDisplay.textContent = '';
-    
+    scoreDisplay.textContent = '';
 });
 
 function resetGame() {
     if (animationId) {
-        cancelAnimationFrame(animationId); // Stop de vorige animatie
+        cancelAnimationFrame(animationId);
     }
     bullets = [];
     asteroids = [];
+    upgrades = [];
     score = 0;
     lastAsteroidSpawn = 0;
+    isAutoShooting = false;
     keys.left = false;
     keys.right = false;
     keys.space = false;
@@ -83,58 +87,45 @@ function initGame() {
     spaceship = { x: canvas.width / 2, y: canvas.height - 70, width: 50, height: 50, speed: 5 };
     bullets = [];
     asteroids = [];
+    upgrades = [];
     score = 0;
     lastAsteroidSpawn = 0;
     isGameOver = false;
 }
 
 function gameOver() {
-    isGameOver = true; // Zorg ervoor dat we de game stoppen
-    cancelAnimationFrame(animationId); // Stop de animatie
-    canvas.style.zIndex = '-1'; // Zet het canvas naar de achtergrond
-    document.getElementById('endScreen').style.display = 'flex'; // Laat het eindscherm zien
-    document.getElementById('finalScore').textContent = `Your Score: ${score}`; // Toon score
+    isGameOver = true;
+    cancelAnimationFrame(animationId);
+    canvas.style.zIndex = '-1';
+    document.getElementById('endScreen').style.display = 'flex';
+    document.getElementById('finalScore').textContent = `Your Score: ${score}`;
 }
 
-document.getElementById('restartButton').addEventListener('click', () => {
-    document.getElementById('endScreen').style.display = 'none';
-    document.getElementById('menu').style.display = 'none'; // Zorg dat het menu niet zichtbaar blijft
-    canvas.style.zIndex = '0';
-
-    resetGame();
-    initGame();
-    gameLoop();
-});
-
-document.getElementById('menuButton').addEventListener('click', () => {
-    document.getElementById('endScreen').style.display = 'none';
-    document.getElementById('menu').style.display = 'flex'; // Flexbox-styling correct toepassen
-});
-
 function gameLoop(timestamp) {
-    if (isGameOver) {
-        return; // Stop de game loop onmiddellijk als de game over is
-    }
+    if (isGameOver) return;
 
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-    updateSpaceship();
+    updateSpaceship(timestamp); // Geef timestamp door
     updateBullets();
     updateAsteroids(timestamp);
+    updateUpgrades(timestamp); // Update upgrades
     checkCollisions();
 
     drawSpaceship();
     drawBullets();
     drawAsteroids();
+    drawUpgrades(); // Teken upgrades
     drawScore();
 
-    animationId = requestAnimationFrame(gameLoop); // Roep de game loop opnieuw aan
+    animationId = requestAnimationFrame(gameLoop);
 }
+
 
 function drawScore() {
     scoreDisplay.textContent = `Score: ${score}`;
 }
 
-function updateSpaceship() {
+function updateSpaceship(timestamp) {
     if (keys.left && spaceship.x > 0) spaceship.x -= spaceship.speed;
     if (keys.right && spaceship.x < canvas.width - spaceship.width) spaceship.x += spaceship.speed;
 
@@ -142,7 +133,16 @@ function updateSpaceship() {
         shootBullet();
         keys.space = false;
     }
+
+    // Automatisch schieten wanneer de upgrade actief is
+    if (isAutoShooting) {
+        if (timestamp - lastAutoShoot > autoShootInterval) {
+            shootBullet();
+            lastAutoShoot = timestamp; // Update het laatste schiettijdstip
+        }
+    }
 }
+
 
 function shootBullet() {
     bullets.push({
@@ -151,14 +151,40 @@ function shootBullet() {
         width: 10,
         height: 20,
         speed: 7,
+        dx: 0, // Richting horizontaal
     });
+
+    if (isAutoShooting) {
+        // Linker diagonaal
+        bullets.push({
+            x: spaceship.x + 5,
+            y: spaceship.y,
+            width: 10,
+            height: 20,
+            speed: 7,
+            dx: -2,
+        });
+        // Rechter diagonaal
+        bullets.push({
+            x: spaceship.x + spaceship.width - 15,
+            y: spaceship.y,
+            width: 10,
+            height: 20,
+            speed: 7,
+            dx: 2,
+        });
+    }
 }
 
 function updateBullets() {
     for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
         bullet.y -= bullet.speed;
-        if (bullet.y + bullet.height < 0) bullets.splice(i, 1);
+        bullet.x += bullet.dx || 0; // Voor diagonale beweging
+
+        if (bullet.y + bullet.height < 0 || bullet.x < 0 || bullet.x > canvas.width) {
+            bullets.splice(i, 1);
+        }
     }
 }
 
@@ -184,6 +210,45 @@ function updateAsteroids(timestamp) {
     }
 }
 
+function updateUpgrades(timestamp) {
+    if (Math.random() < 0.002) { // Kans op spawning
+        const size = 30;
+        upgrades.push({
+            x: Math.random() * (canvas.width - size),
+            y: -size,
+            width: size,
+            height: size,
+            speed: 2,
+        });
+    }
+
+    for (let i = upgrades.length - 1; i >= 0; i--) {
+        const upgrade = upgrades[i];
+        upgrade.y += upgrade.speed;
+
+        if (upgrade.y > canvas.height) upgrades.splice(i, 1);
+
+        if (
+            spaceship.x < upgrade.x + upgrade.width &&
+            spaceship.x + spaceship.width > upgrade.x &&
+            spaceship.y < upgrade.y + upgrade.height &&
+            spaceship.y + spaceship.height > upgrade.y
+        ) {
+            upgrades.splice(i, 1);
+            activateAutoShooting();
+        }
+    }
+}
+
+function activateAutoShooting() {
+    if (isAutoShooting) return;
+
+    isAutoShooting = true;
+    autoShootingTimer = setTimeout(() => {
+        isAutoShooting = false;
+    }, 10000);
+}
+
 function drawSpaceship() {
     ctx.drawImage(spaceshipImg, spaceship.x, spaceship.y, spaceship.width, spaceship.height);
 }
@@ -197,6 +262,12 @@ function drawBullets() {
 function drawAsteroids() {
     for (const asteroid of asteroids) {
         ctx.drawImage(asteroidImg, asteroid.x, asteroid.y, asteroid.width, asteroid.height);
+    }
+}
+
+function drawUpgrades() {
+    for (const upgrade of upgrades) {
+        ctx.drawImage(upgradeImg, upgrade.x, upgrade.y, upgrade.width, upgrade.height);
     }
 }
 
