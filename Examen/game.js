@@ -4,13 +4,17 @@ const spaceshipImg = new Image();
 const asteroidImg = new Image();
 const backgroundImg = new Image();
 const beamImg = new Image();
-const upgradeImg = new Image(); // Upgrade afbeelding
+const upgradeImg = new Image();
 
-spaceshipImg.src = 'spaceship.png';
-asteroidImg.src = 'enemy.png';
-backgroundImg.src = 'background.png';
-beamImg.src = 'beam.png';
-upgradeImg.src = 'upgrade.png';
+const gameoversound = new Audio('sounds/game-over.mp3');
+const gamestartsound = new Audio('sounds/game-start.mp3');
+const muziek = new Audio('sounds/8bitasteroid.mp3');
+
+spaceshipImg.src = 'images/spaceship.png';
+asteroidImg.src = 'images/enemy.png';
+backgroundImg.src = 'images/background.png';
+beamImg.src = 'images/beam.png';
+upgradeImg.src = 'images/upgrade.png';
 
 let spaceship, bullets, asteroids, upgrades, score, asteroidSpawnInterval, animationId, lastAsteroidSpawn;
 let isGameOver = false;
@@ -25,6 +29,7 @@ const keys = { left: false, right: false, space: false };
 const scoreDisplay = document.createElement('div');
 scoreDisplay.id = 'gameScore';
 document.body.appendChild(scoreDisplay);
+muziek.play();
 
 window.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') keys.left = true;
@@ -91,6 +96,7 @@ function initGame() {
     score = 0;
     lastAsteroidSpawn = 0;
     isGameOver = false;
+    gamestartsound.play();
 }
 
 function gameOver() {
@@ -103,9 +109,8 @@ function gameOver() {
 
 function gameLoop(timestamp) {
     if (isGameOver) return;
-
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-    updateSpaceship(timestamp); // Geef timestamp door
+    updateSpaceship();
     updateBullets();
     updateAsteroids(timestamp);
     updateUpgrades(timestamp); // Update upgrades
@@ -119,7 +124,6 @@ function gameLoop(timestamp) {
 
     animationId = requestAnimationFrame(gameLoop);
 }
-
 
 function drawScore() {
     scoreDisplay.textContent = `Score: ${score}`;
@@ -174,6 +178,8 @@ function shootBullet() {
             dx: 2,
         });
     }
+    const laserbeamsound = new Audio('sounds/laserbeam.mp3')
+    laserbeamsound.play();
 }
 
 function updateBullets() {
@@ -236,6 +242,8 @@ function updateUpgrades(timestamp) {
         ) {
             upgrades.splice(i, 1);
             activateAutoShooting();
+            const upgradeSound = new Audio('sounds/upgrade.mp3');
+            upgradeSound.play();
         }
     }
 }
@@ -285,6 +293,8 @@ function checkCollisions() {
                 asteroids.splice(i, 1);
                 bullets.splice(j, 1);
                 score++;
+                const explosionsound = new Audio('sounds/explosie.mp3');
+                explosionsound.play();
                 break;
             }
         }
@@ -295,6 +305,7 @@ function checkCollisions() {
             spaceship.y < asteroid.y + asteroid.height &&
             spaceship.y + spaceship.height > asteroid.y
         ) {
+            gameoversound.play();
             gameOver();
         }
     }
