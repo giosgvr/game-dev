@@ -10,6 +10,9 @@ const gameoversound = new Audio('sounds/game-over.mp3');
 const gamestartsound = new Audio('sounds/game-start.mp3');
 const muziek = new Audio('sounds/8bitasteroid.mp3');
 
+muziek.loop = true; // Allow the music to loop continuously
+
+
 spaceshipImg.src = 'images/spaceship.png';
 asteroidImg.src = 'images/enemy.png';
 backgroundImg.src = 'images/background.png';
@@ -29,7 +32,6 @@ const keys = { left: false, right: false, space: false };
 const scoreDisplay = document.createElement('div');
 scoreDisplay.id = 'gameScore';
 document.body.appendChild(scoreDisplay);
-muziek.play();
 
 window.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') keys.left = true;
@@ -68,8 +70,10 @@ document.getElementById('restartButton').addEventListener('click', () => {
 
 document.getElementById('menuButton').addEventListener('click', () => {
     document.getElementById('endScreen').style.display = 'none';
-    document.getElementById('menu').style.display = 'block';
+    document.getElementById('menu').style.display = 'flex';
     scoreDisplay.textContent = '';
+
+    muziek.pause();
 });
 
 function resetGame() {
@@ -97,6 +101,10 @@ function initGame() {
     lastAsteroidSpawn = 0;
     isGameOver = false;
     gamestartsound.play();
+    
+    muziek.pause();
+    muziek.currentTime = 0; // Reset to the beginning
+    muziek.play();
 }
 
 function gameOver() {
@@ -105,6 +113,8 @@ function gameOver() {
     canvas.style.zIndex = '-1';
     document.getElementById('endScreen').style.display = 'flex';
     document.getElementById('finalScore').textContent = `Your Score: ${score}`;
+
+    muziek.pause();
 }
 
 function gameLoop(timestamp) {
