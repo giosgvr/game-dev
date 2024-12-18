@@ -11,6 +11,7 @@ const gamestartsound = new Audio('sounds/game-start.mp3');
 const muziek = new Audio('sounds/8bitasteroid.mp3');
 
 muziek.loop = true; // Allow the music to loop continuously
+muziek.volume = 0.5;
 
 spaceshipImg.src = 'images/spaceship.png';
 asteroidImg.src = 'images/enemy.png';
@@ -38,6 +39,7 @@ const keys = { left: false, right: false, space: false };
 // Pause Screen Setup
 
 const pauseScreen = document.getElementById('pauseScreen');
+const instructiescherm = document.getElementById('instructies')
 
 // Voeg score display toe
 const scoreDisplay = document.createElement('div');
@@ -63,6 +65,17 @@ window.addEventListener('keyup', (e) => {
     if (e.code === 'ArrowLeft') keys.left = false;
     if (e.code === 'ArrowRight') keys.right = false;
     if (e.code === 'Space') keys.space = false;
+});
+
+document.getElementById('Instructieknop').addEventListener('click', () => {
+    document.getElementById('menu').style.display = 'none';
+    instructiescherm.style.display = 'flex';
+});
+
+// Add event listener for back button in instruction screen
+document.getElementById('Terugknop').addEventListener('click', () => {
+    instructiescherm.style.display = 'none';
+    document.getElementById('menu').style.display = 'flex';
 });
 
 // Pause Screen Buttons

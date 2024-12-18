@@ -9,6 +9,7 @@ canvas {
     left: 0;
     z-index: 0;
 }
+
 #menu,
 #endScreen,
 #pauseScreen,
@@ -27,6 +28,27 @@ canvas {
     font-family: 'Press Start 2P', cursive;
     z-index: 1;
     text-align: center; /* Zorg dat tekst goed wordt uitgelijnd */
+}
+
+#menu button,
+#endScreen button,
+#pauseScreen button,
+#instructies button {
+    font-family: 'Press Start 2P', cursive;
+}
+#menu button:hover,
+#endScreen button:hover,
+#pauseScreen button:hover,
+#instructies button:hover {
+    background-color: #DAA520; /* Dark golden yellow on hover */
+}
+
+#menu button:active,
+#endScreen button:active,
+#pauseScreen button:active,
+#instructies button:active {
+    transform: scale(0.95); /* Make button appear slightly pressed */
+    background-color: #B8860B; /* Even darker golden yellow when pressed */
 }
 
 #endScreen {
