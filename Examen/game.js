@@ -12,7 +12,6 @@ const muziek = new Audio('sounds/8bitasteroid.mp3');
 
 muziek.loop = true; // Allow the music to loop continuously
 
-
 spaceshipImg.src = 'images/spaceship.png';
 asteroidImg.src = 'images/enemy.png';
 backgroundImg.src = 'images/background.png';
@@ -21,12 +20,24 @@ upgradeImg.src = 'images/upgrade.png';
 
 let spaceship, bullets, asteroids, upgrades, score, asteroidSpawnInterval, animationId, lastAsteroidSpawn;
 let isGameOver = false;
-let isAutoShooting = false; // Automatisch schieten
+let isPaused = false;
+let isAutoShooting = false;
 let autoShootingTimer = null;
-let lastAutoShoot = 0; // Tijdstip van het laatste autoschot
-const autoShootInterval = 300; // Interval tussen autoschoten in milliseconden
+let lastAutoShoot = 0;
+const autoShootInterval = 300;
+
+// New variables for difficulty scaling
+let currentDifficulty = 'medium';
+let difficultyScaleTimer = null;
+let asteroidSpawnMultiplier = 1;
+let baseAsteroidSpawnInterval = 1000;
+let asteroidSpeedMultiplier = 1;
 
 const keys = { left: false, right: false, space: false };
+
+// Pause Screen Setup
+
+const pauseScreen = document.getElementById('pauseScreen');
 
 // Voeg score display toe
 const scoreDisplay = document.createElement('div');
@@ -37,16 +48,55 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') keys.left = true;
     if (e.code === 'ArrowRight') keys.right = true;
     if (e.code === 'Space') keys.space = true;
+    
+    // Pause functionality with Escape key
+    if (e.code === 'Escape' && !isGameOver) {
+        if (isPaused) {
+            resumeGame();
+        } else {
+            pauseGame();
+        }
+    }
 });
+
 window.addEventListener('keyup', (e) => {
     if (e.code === 'ArrowLeft') keys.left = false;
     if (e.code === 'ArrowRight') keys.right = false;
     if (e.code === 'Space') keys.space = false;
 });
 
+// Pause Screen Buttons
+document.getElementById('resumeButton').addEventListener('click', resumeGame);
+document.getElementById('pauseMenuButton').addEventListener('click', () => {
+    pauseScreen.style.display = 'none';
+    document.getElementById('menu').style.display = 'flex';
+    scoreDisplay.textContent = '';
+    muziek.pause();
+    cancelAnimationFrame(animationId);
+    isPaused = false;
+});
+
 document.getElementById('startButton').addEventListener('click', () => {
-    const difficulty = document.getElementById('difficulty').value;
-    asteroidSpawnInterval = difficulty === 'easy' ? 1500 : difficulty === 'medium' ? 1000 : 500;
+    currentDifficulty = document.getElementById('difficulty').value;
+    
+    // Set initial spawn interval and multipliers based on difficulty
+    switch(currentDifficulty) {
+        case 'easy':
+            baseAsteroidSpawnInterval = 1500;
+            asteroidSpawnInterval = 1500;
+            difficultyScaleTimer = 15000; // Scale every 15 seconds
+            break;
+        case 'medium':
+            baseAsteroidSpawnInterval = 1000;
+            asteroidSpawnInterval = 1000;
+            difficultyScaleTimer = 10000; // Scale every 10 seconds
+            break;
+        case 'hard':
+            baseAsteroidSpawnInterval = 500;
+            asteroidSpawnInterval = 500;
+            difficultyScaleTimer = 5000; // Scale every 5 seconds
+            break;
+    }
 
     document.getElementById('menu').style.display = 'none';
     canvas.style.zIndex = '0';
@@ -76,6 +126,37 @@ document.getElementById('menuButton').addEventListener('click', () => {
     muziek.pause();
 });
 
+function scaleDifficulty(timestamp) {
+    if (isGameOver || isPaused) return;
+
+    // Increase asteroid spawn rate
+    asteroidSpawnMultiplier += 0.2;
+    asteroidSpawnInterval = Math.max(200, baseAsteroidSpawnInterval / asteroidSpawnMultiplier);
+
+    // For hard difficulty, also increase asteroid speed
+    if (currentDifficulty === 'hard') {
+        asteroidSpeedMultiplier += 0.2;
+    }
+}
+
+function pauseGame() {
+    if (isGameOver) return;
+    
+    isPaused = true;
+    cancelAnimationFrame(animationId);
+    pauseScreen.style.display = 'flex';
+    muziek.pause();
+}
+
+function resumeGame() {
+    if (isGameOver) return;
+    
+    isPaused = false;
+    pauseScreen.style.display = 'none';
+    muziek.play();
+    gameLoop();
+}
+
 function resetGame() {
     if (animationId) {
         cancelAnimationFrame(animationId);
@@ -90,7 +171,25 @@ function resetGame() {
     keys.right = false;
     keys.space = false;
     isGameOver = false;
+    isPaused = false;
+
+    asteroidSpawnMultiplier = 1;
+    asteroidSpeedMultiplier = 1;
+    
+    // Reset spawn interval based on difficulty
+    switch(currentDifficulty) {
+        case 'easy':
+            asteroidSpawnInterval = 1500;
+            break;
+        case 'medium':
+            asteroidSpawnInterval = 1000;
+            break;
+        case 'hard':
+            asteroidSpawnInterval = 500;
+            break;
+    }
 }
+
 
 function initGame() {
     spaceship = { x: canvas.width / 2, y: canvas.height - 70, width: 50, height: 50, speed: 5 };
@@ -118,18 +217,19 @@ function gameOver() {
 }
 
 function gameLoop(timestamp) {
-    if (isGameOver) return;
+    if (isGameOver || isPaused) return;
+    
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-    updateSpaceship();
+    updateSpaceship(timestamp);
     updateBullets();
     updateAsteroids(timestamp);
-    updateUpgrades(timestamp); // Update upgrades
+    updateUpgrades(timestamp);
     checkCollisions();
 
     drawSpaceship();
     drawBullets();
     drawAsteroids();
-    drawUpgrades(); // Teken upgrades
+    drawUpgrades();
     drawScore();
 
     animationId = requestAnimationFrame(gameLoop);
@@ -207,15 +307,30 @@ function updateBullets() {
 function updateAsteroids(timestamp) {
     if (!lastAsteroidSpawn) lastAsteroidSpawn = timestamp;
 
+    // Track difficulty scaling
+    if (difficultyScaleTimer && timestamp - difficultyScaleTimer > (
+        currentDifficulty === 'easy' ? 15000 : 
+        currentDifficulty === 'medium' ? 10000 : 5000
+    )) {
+        scaleDifficulty(timestamp);
+        difficultyScaleTimer = timestamp;
+    }
+
     if (timestamp - lastAsteroidSpawn > asteroidSpawnInterval) {
         const size = Math.random() * 40 + 20;
-        asteroids.push({
-            x: Math.random() * (canvas.width - size),
-            y: -size,
-            width: size,
-            height: size,
-            speed: Math.random() * 2 + 1,
-        });
+        
+        // Spawn multiple asteroids based on difficulty multiplier
+        const spawnCount = Math.ceil(Math.random() * asteroidSpawnMultiplier);
+        
+        for (let i = 0; i < spawnCount; i++) {
+            asteroids.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                speed: (Math.random() * 2 + 1) * (currentDifficulty === 'hard' ? asteroidSpeedMultiplier : 1),
+            });
+        }
         lastAsteroidSpawn = timestamp;
     }
 

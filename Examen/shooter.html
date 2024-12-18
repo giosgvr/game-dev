@@ -19,6 +19,18 @@
             <option value="hard">moeilijk</option>
         </select>
         <button id="startButton">Start Game</button>
+        <button id="Instructiesknop">Instructies</button>
+    </div>
+
+    <div id="instructies" style="display: none">
+        <h1>Instructies</h1>
+        <h2>Gebruik de arrow keys om van links naar rechts te bewegen, en schiet
+            laserbeams met de spatieknop om de enemies te vernietigen! naarmate de tijd vordert,
+            komen er steeds meer enemies op je af. 
+        </h2>
+        <h2>zodra je door een van de enemies word geraakt ben je game over en is het spel afgelopen. je kan de game altijd herstarten, of teruggaan naar het hoofdmenu om met een andere moeilijkheidsgraad te starten.</h2>
+        <h2>Je kan de game ten alle tijde verlaten of pauzeren door op de 'escape' knop te drukken.</h2>
+        <button id="Terugknop">Terug</button>
     </div>
 
     <div id="endScreen" style="display: none;">
@@ -26,6 +38,12 @@
         <p id="finalScore"></p>
         <button id="restartButton">Restart Game</button>
         <button id="menuButton">Main Menu</button>
+    </div>
+
+    <div id="pauseScreen" style="display: none;">
+        <h1>Game Paused</h1>
+    <button id="resumeButton">Resume Game</button>
+    <button id="pauseMenuButton">Main Menu</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
