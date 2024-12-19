@@ -331,10 +331,10 @@ function updateAsteroids(timestamp) {
 
     if (timestamp - lastAsteroidSpawn > asteroidSpawnInterval) {
         const size = Math.random() * 40 + 20;
-        
+
         // Spawn multiple asteroids based on difficulty multiplier
         const spawnCount = Math.ceil(Math.random() * asteroidSpawnMultiplier);
-        
+
         for (let i = 0; i < spawnCount; i++) {
             asteroids.push({
                 x: Math.random() * (canvas.width - size),
@@ -342,6 +342,7 @@ function updateAsteroids(timestamp) {
                 width: size,
                 height: size,
                 speed: (Math.random() * 2 + 1) * (currentDifficulty === 'hard' ? asteroidSpeedMultiplier : 1),
+                canSplit: size > 40 // Alleen grotere asteroïden mogen splitsen
             });
         }
         lastAsteroidSpawn = timestamp;
@@ -353,6 +354,7 @@ function updateAsteroids(timestamp) {
         if (asteroid.y > canvas.height) asteroids.splice(i, 1);
     }
 }
+
 
 function updateUpgrades(timestamp) {
     if (Math.random() < 0.002) { // Kans op spawning
@@ -428,8 +430,34 @@ function checkCollisions() {
                 bullet.y < asteroid.y + asteroid.height &&
                 bullet.y + bullet.height > asteroid.y
             ) {
-                asteroids.splice(i, 1);
+                // Verwijder originele asteroïde en kogel
                 bullets.splice(j, 1);
+
+                if (asteroid.canSplit) {
+                    // Splits de asteroïde in twee kleinere
+                    const newSize = asteroid.width / 2;
+                    asteroids.push({
+                        x: asteroid.x,
+                        y: asteroid.y,
+                        width: newSize,
+                        height: newSize,
+                        speed: asteroid.speed * 1.2,
+                        canSplit: false // De kleinere asteroïden kunnen niet meer splitsen
+                    });
+                    asteroids.push({
+                        x: asteroid.x + newSize,
+                        y: asteroid.y,
+                        width: newSize,
+                        height: newSize,
+                        speed: asteroid.speed * 1.2,
+                        canSplit: false // De kleinere asteroïden kunnen niet meer splitsen
+                    });
+                }
+
+                // Verwijder de originele asteroïde
+                asteroids.splice(i, 1);
+
+                // Verhoog score
                 score++;
                 const explosionsound = new Audio('sounds/explosie.mp3');
                 explosionsound.play();
@@ -448,3 +476,5 @@ function checkCollisions() {
         }
     }
 }
+
+
