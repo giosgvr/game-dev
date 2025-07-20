@@ -253,7 +253,6 @@ function gameOver() {
 /**
  * Main game loop
  * Updates all game objects and draws them to the canvas
- * @param {number} timestamp - Current time in milliseconds
  */
 function gameLoop(timestamp) {
     if (isGameOver || isPaused) return;
@@ -281,7 +280,7 @@ function gameLoop(timestamp) {
  * Increases game difficulty over time
  * Increases asteroid spawn rate and speed
  */
-function scaleDifficulty(timestamp) {
+function scaleDifficulty() {
     if (isGameOver || isPaused) return;
 
     // Increase spawn rate
