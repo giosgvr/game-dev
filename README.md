@@ -7,8 +7,8 @@ Dit project is gemaakt voor de Game Development module van de Bit Academy. Het b
 Dit project is een 2D platformer. Het doel was om de basisprincipes van gameontwikkeling te leren, zoals het opzetten van een spelwereld, het implementeren van spelersbesturing en het creëren van interactieve elementen.
 
 De belangrijkste kenmerken zijn:
-* **Spelersbesturing**: Lopen en springen.
-* **Level Design**: Een eenvoudig level gebouwd met een TileSet.
+* **Spelersbesturing**: heen en weer bewegen en schieten van de enemies.
+* **Level Design**: Een eenvoudig level gebouwd met enemies die naar beneden vallen. om de zoveel seconden word het spel lastiger afhankelijk van de gekozen moeilijkheid.
 * **Vijanden**: Simpele vijanden met basisgedrag.
 * **Verzamelobjecten**: Objecten die de speler kan oppakken.
 
